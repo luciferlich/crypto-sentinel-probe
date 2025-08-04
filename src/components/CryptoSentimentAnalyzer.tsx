@@ -3,8 +3,9 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Info, Clock, ExternalLink, CalendarDays } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { SentimentDashboard } from '@/components/SentimentDashboard';
 import { RedditSentimentWidget } from '@/components/RedditSentimentWidget';
@@ -36,12 +37,25 @@ interface SentimentData {
   data_freshness: string;
 }
 
+interface NewsItem {
+  title: string;
+  summary: string;
+  url: string;
+  source: string;
+  published_at: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  relevance_score: number;
+}
+
 export const CryptoSentimentAnalyzer = () => {
   const [coin, setCoin] = useState('');
   const [loading, setLoading] = useState(false);
   const [cryptoData, setCryptoData] = useState<CryptoData | null>(null);
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
   const [redditSentiment, setRedditSentiment] = useState<any>(null);
+  const [newsData, setNewsData] = useState<NewsItem[]>([]);
+  const [newsTimeRange, setNewsTimeRange] = useState([7]); // Days ago
+  const [loadingNews, setLoadingNews] = useState(false);
   const { toast } = useToast();
 
   const analyzeCrypto = async () => {
@@ -104,6 +118,9 @@ export const CryptoSentimentAnalyzer = () => {
       };
 
       setSentimentData(mockSentiment);
+      
+      // Fetch news data
+      await fetchNewsData(coin);
 
       toast({
         title: "Analysis Complete",
@@ -118,6 +135,84 @@ export const CryptoSentimentAnalyzer = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNewsData = async (coinName: string) => {
+    setLoadingNews(true);
+    try {
+      // Simulate news data - in real implementation, use CoinGecko's news API or other news sources
+      const mockNews: NewsItem[] = [
+        {
+          title: `${coinName.toUpperCase()} sees major institutional adoption`,
+          summary: 'Large financial institutions are increasingly showing interest in this cryptocurrency...',
+          url: '#',
+          source: 'CryptoNews',
+          published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'positive',
+          relevance_score: 0.9
+        },
+        {
+          title: `Market volatility affects ${coinName.toUpperCase()} trading`,
+          summary: 'Recent market conditions have led to increased volatility in trading patterns...',
+          url: '#',
+          source: 'CoinDesk',
+          published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'neutral',
+          relevance_score: 0.7
+        },
+        {
+          title: `Regulatory concerns impact ${coinName.toUpperCase()} development`,
+          summary: 'New regulatory discussions may affect the future development and adoption...',
+          url: '#',
+          source: 'Bloomberg Crypto',
+          published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'negative',
+          relevance_score: 0.8
+        },
+        {
+          title: `${coinName.toUpperCase()} technical analysis shows bullish patterns`,
+          summary: 'Chart analysis reveals potential upward momentum in the coming weeks...',
+          url: '#',
+          source: 'CoinTelegraph',
+          published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'positive',
+          relevance_score: 0.6
+        }
+      ];
+
+      // Filter news by time range
+      const cutoffDate = new Date(Date.now() - newsTimeRange[0] * 24 * 60 * 60 * 1000);
+      const filteredNews = mockNews.filter(news => new Date(news.published_at) >= cutoffDate);
+      
+      setNewsData(filteredNews);
+    } catch (error) {
+      console.error('Failed to fetch news:', error);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  const handleNewsTimeRangeChange = async (value: number[]) => {
+    setNewsTimeRange(value);
+    if (cryptoData) {
+      await fetchNewsData(cryptoData.name);
+    }
+  };
+
+  const getSentimentIcon = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return <TrendingUp className="w-4 h-4 text-success" />;
+      case 'negative': return <TrendingDown className="w-4 h-4 text-destructive" />;
+      default: return <Info className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  const getSentimentBadgeColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return 'bg-success/20 text-success border-success/30';
+      case 'negative': return 'bg-destructive/20 text-destructive border-destructive/30';
+      default: return 'bg-muted/20 text-muted-foreground border-muted/30';
     }
   };
 
@@ -386,6 +481,101 @@ export const CryptoSentimentAnalyzer = () => {
                     {sentimentData.scam_indicators.news_sentiment.toFixed(0)}/100
                   </span>
                 </div>
+              </div>
+            </Card>
+
+            {/* News Analysis */}
+            <Card className="p-6 border-border lg:col-span-2">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold flex items-center">
+                  <CalendarDays className="w-5 h-5 mr-2 text-primary" />
+                  News Analysis
+                </h3>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    Last {newsTimeRange[0]} day{newsTimeRange[0] !== 1 ? 's' : ''}
+                  </span>
+                  {loadingNews && <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />}
+                </div>
+              </div>
+              
+              {/* Time Range Slider */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">Time Range:</span>
+                  <div className="flex-1 max-w-xs">
+                    <Slider
+                      value={newsTimeRange}
+                      onValueChange={handleNewsTimeRangeChange}
+                      max={30}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                  <span className="text-sm text-muted-foreground w-16">
+                    {newsTimeRange[0]} day{newsTimeRange[0] !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>1 day</span>
+                  <span>30 days</span>
+                </div>
+              </div>
+
+              {/* News List */}
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {newsData.length > 0 ? (
+                  newsData.map((news, index) => (
+                    <div 
+                      key={index} 
+                      className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-sm leading-tight flex-1 mr-4">
+                          {news.title}
+                        </h4>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {getSentimentIcon(news.sentiment)}
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${getSentimentBadgeColor(news.sentiment)}`}
+                          >
+                            {news.sentiment}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                        {news.summary}
+                      </p>
+                      
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {new Date(news.published_at).toLocaleDateString()}
+                          </span>
+                          <span>{news.source}</span>
+                          <span className="flex items-center">
+                            Relevance: {(news.relevance_score * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="text-xs h-6">
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Read
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      No news found for the selected time range
+                    </p>
+                  </div>
+                )}
               </div>
             </Card>
 
