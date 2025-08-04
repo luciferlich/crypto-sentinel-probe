@@ -19,6 +19,7 @@ interface RedditPost {
   author: string;
   subreddit: string;
   comments: number;
+  url: string;
 }
 
 interface RedditSentimentWidgetProps {
@@ -49,7 +50,8 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
         timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(),
         author: `user_${Math.floor(Math.random() * 1000)}`,
         subreddit: ['cryptocurrency', 'CryptoMarkets', 'Bitcoin', 'ethtrader'][Math.floor(Math.random() * 4)],
-        comments: Math.floor(Math.random() * 100)
+        comments: Math.floor(Math.random() * 100),
+        url: `https://reddit.com/r/${['cryptocurrency', 'CryptoMarkets', 'Bitcoin', 'ethtrader'][Math.floor(Math.random() * 4)]}/comments/abc${i}`
       }));
 
       setPosts(mockPosts);
@@ -144,7 +146,14 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
                 <div className={`flex items-center ${getSentimentColor(post.sentiment)}`}>
                   {getSentimentIcon(post.sentiment)}
                 </div>
-                <h4 className="text-sm font-medium line-clamp-1">{post.title}</h4>
+                <a 
+                  href={post.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors flex-1"
+                >
+                  <h4 className="text-sm font-medium line-clamp-1 hover:underline">{post.title}</h4>
+                </a>
               </div>
               <div className="flex items-center gap-1 ml-2">
                 {post.isBot && (

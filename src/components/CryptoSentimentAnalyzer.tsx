@@ -146,7 +146,7 @@ export const CryptoSentimentAnalyzer = () => {
         {
           title: `${coinName.toUpperCase()} sees major institutional adoption`,
           summary: 'Large financial institutions are increasingly showing interest in this cryptocurrency...',
-          url: '#',
+          url: 'https://cryptonews.com/news/institutional-adoption',
           source: 'CryptoNews',
           published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
           sentiment: 'positive',
@@ -155,7 +155,7 @@ export const CryptoSentimentAnalyzer = () => {
         {
           title: `Market volatility affects ${coinName.toUpperCase()} trading`,
           summary: 'Recent market conditions have led to increased volatility in trading patterns...',
-          url: '#',
+          url: 'https://coindesk.com/markets/analysis',
           source: 'CoinDesk',
           published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
           sentiment: 'neutral',
@@ -164,7 +164,7 @@ export const CryptoSentimentAnalyzer = () => {
         {
           title: `Regulatory concerns impact ${coinName.toUpperCase()} development`,
           summary: 'New regulatory discussions may affect the future development and adoption...',
-          url: '#',
+          url: 'https://bloomberg.com/crypto/regulatory-update',
           source: 'Bloomberg Crypto',
           published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
           sentiment: 'negative',
@@ -173,7 +173,7 @@ export const CryptoSentimentAnalyzer = () => {
         {
           title: `${coinName.toUpperCase()} technical analysis shows bullish patterns`,
           summary: 'Chart analysis reveals potential upward momentum in the coming weeks...',
-          url: '#',
+          url: 'https://cointelegraph.com/news/technical-analysis',
           source: 'CoinTelegraph',
           published_at: new Date(Date.now() - Math.random() * newsTimeRange[0] * 24 * 60 * 60 * 1000).toISOString(),
           sentiment: 'positive',
@@ -279,10 +279,12 @@ export const CryptoSentimentAnalyzer = () => {
 
         {/* Reddit Sentiment Widget */}
         {cryptoData && (
-          <RedditSentimentWidget 
-            coinSymbol={cryptoData.symbol.toUpperCase()}
-            onSentimentUpdate={setRedditSentiment}
-          />
+          <div className="mb-4">
+            <RedditSentimentWidget 
+              coinSymbol={cryptoData.symbol.toUpperCase()}
+              onSentimentUpdate={setRedditSentiment}
+            />
+          </div>
         )}
 
         {/* Results */}
@@ -321,7 +323,7 @@ export const CryptoSentimentAnalyzer = () => {
               />
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Crypto Info */}
             <Card className="p-6 border-border">
               <h3 className="text-xl font-semibold mb-4 flex items-center">
@@ -532,9 +534,16 @@ export const CryptoSentimentAnalyzer = () => {
                       className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-sm leading-tight flex-1 mr-4">
-                          {news.title}
-                        </h4>
+                        <a 
+                          href={news.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="hover:text-primary transition-colors flex-1 mr-4"
+                        >
+                          <h4 className="font-medium text-sm leading-tight hover:underline">
+                            {news.title}
+                          </h4>
+                        </a>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {getSentimentIcon(news.sentiment)}
                           <Badge 
@@ -561,10 +570,16 @@ export const CryptoSentimentAnalyzer = () => {
                             Relevance: {(news.relevance_score * 100).toFixed(0)}%
                           </span>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-xs h-6">
-                          <ExternalLink className="w-3 h-3 mr-1" />
-                          Read
-                        </Button>
+                        <a 
+                          href={news.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <Button variant="ghost" size="sm" className="text-xs h-6">
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Read
+                          </Button>
+                        </a>
                       </div>
                     </div>
                   ))
