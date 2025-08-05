@@ -262,11 +262,11 @@ export const CryptoSentimentAnalyzer = () => {
       {/* Header */}
       <div className="relative z-10 container mx-auto px-6 py-8">
         <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <img 
               src={sentinelLogoPath} 
               alt="Sentinel Logo" 
-              className="w-10 h-10"
+              className="w-14 h-14 rounded-xl shadow-lg shadow-primary/20"
             />
             <span className="text-2xl font-bold text-white">CryptoSentinel</span>
           </div>
