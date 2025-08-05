@@ -31,7 +31,7 @@ interface SentimentMetrics {
     volume: number;
     liquidityRisk: number;
     manipulationScore: number;
-    rugPullRisk: number;
+    volatilityRisk: number;
   };
 }
 
@@ -46,7 +46,7 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
     metrics.riskFactors.volume + 
     metrics.riskFactors.liquidityRisk + 
     metrics.riskFactors.manipulationScore + 
-    metrics.riskFactors.rugPullRisk
+    metrics.riskFactors.volatilityRisk
   ) / 4;
 
   const getRiskLevel = (score: number) => {
@@ -78,7 +78,7 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
     <TooltipProvider>
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Overall Risk Assessment */}
-        <Card className="p-6 border-border lg:col-span-2 xl:col-span-1">
+        <Card className="p-6 border-border lg:col-span-2 xl:col-span-1 module-card sentiment-module">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold flex items-center">
               <Shield className="w-5 h-5 mr-2 text-primary" />
@@ -123,10 +123,10 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm">Rug Pull Risk</span>
+                <span className="text-sm">Volatility Risk</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={metrics.riskFactors.rugPullRisk} className="w-16 h-2" />
-                  <span className="text-xs w-8">{metrics.riskFactors.rugPullRisk}%</span>
+                  <Progress value={metrics.riskFactors.volatilityRisk} className="w-16 h-2" />
+                  <span className="text-xs w-8">{metrics.riskFactors.volatilityRisk}%</span>
                 </div>
               </div>
             </div>
@@ -134,7 +134,7 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
         </Card>
 
         {/* Reddit Sentiment Analysis */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 border-border module-card sentiment-module">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <MessageSquare className="w-5 h-5 mr-2 text-accent" />
             Reddit Analysis
@@ -198,7 +198,7 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
         </Card>
 
         {/* News & Social Media */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 border-border module-card sentiment-module">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2 text-primary" />
             Social Metrics
@@ -208,13 +208,13 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-accent">
-                  {(metrics.socialEngagement.mentions / 1000).toFixed(1)}K
+                  {(metrics.socialEngagement.mentions / 1000).toPrecision(3)}K
                 </div>
                 <p className="text-xs text-muted-foreground">Mentions (24h)</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">
-                  {metrics.socialEngagement.viralityScore}
+                  {metrics.socialEngagement.viralityScore.toPrecision(3)}
                 </div>
                 <p className="text-xs text-muted-foreground">Virality Score</p>
               </div>
@@ -223,12 +223,12 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm">News Sentiment</span>
-                <span className="text-sm font-medium">{metrics.newsAnalysis.sentiment}/100</span>
+                <span className="text-sm font-medium">{Number(metrics.newsAnalysis.sentiment).toPrecision(3)}/100</span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">News Credibility</span>
-                <span className="text-sm font-medium">{metrics.newsAnalysis.credibility}%</span>
+                <span className="text-sm font-medium">{Number(metrics.newsAnalysis.credibility).toPrecision(3)}%</span>
               </div>
               
               <div className="flex justify-between items-center">
@@ -244,19 +244,19 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
                     <p>How recent the analyzed data is</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-sm font-medium">{metrics.newsAnalysis.recency}%</span>
+                <span className="text-sm font-medium">{Number(metrics.newsAnalysis.recency).toPrecision(3)}%</span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">Influencer Sentiment</span>
-                <span className="text-sm font-medium">{metrics.socialEngagement.influencerSentiment}/100</span>
+                <span className="text-sm font-medium">{Number(metrics.socialEngagement.influencerSentiment).toPrecision(3)}/100</span>
               </div>
             </div>
           </div>
         </Card>
 
         {/* Sentiment vs Price Correlation */}
-        <Card className="p-6 border-border lg:col-span-2">
+        <Card className="p-6 border-border lg:col-span-2 module-card sentiment-module">
           <h3 className="text-lg font-semibold mb-4">Sentiment vs Price Correlation</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -292,8 +292,8 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
                   yAxisId="sentiment"
                   type="monotone" 
                   dataKey="sentiment" 
-                  stroke="hsl(var(--accent))" 
-                  fill="hsl(var(--accent))"
+                  stroke={priceHistory.length > 0 && priceHistory[priceHistory.length - 1].sentiment > 50 ? "#22c55e" : "#ef4444"}
+                  fill={priceHistory.length > 0 && priceHistory[priceHistory.length - 1].sentiment > 50 ? "#22c55e" : "#ef4444"}
                   fillOpacity={0.2}
                 />
               </AreaChart>
@@ -302,7 +302,7 @@ export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: Sentim
         </Card>
 
         {/* Comprehensive Analysis Radar */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 border-border module-card sentiment-module">
           <h3 className="text-lg font-semibold mb-4">Multi-Factor Analysis</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

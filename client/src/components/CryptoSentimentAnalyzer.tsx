@@ -243,16 +243,59 @@ export const CryptoSentimentAnalyzer = () => {
     return 'text-destructive';
   };
 
-  const chartData = cryptoData?.sparkline_in_7d?.price?.map((price, index) => ({
-    time: index,
-    price: price
-  })) || [];
+  const chartData = cryptoData?.sparkline_in_7d?.price?.map((price, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    return {
+      time: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      price: price,
+      timestamp: date.getTime()
+    };
+  }) || [];
 
   const pieData = sentimentData ? [
-    { name: 'Positive', value: sentimentData.scam_indicators.social_sentiment, color: '#22c55e' },
-    { name: 'Neutral', value: 50, color: '#64748b' },
-    { name: 'Negative', value: 100 - sentimentData.scam_indicators.social_sentiment, color: '#ef4444' }
+    { 
+      name: 'Bullish', 
+      value: sentimentData.scam_indicators.social_sentiment, 
+      color: '#22c55e',
+      gradient: 'url(#positiveGradient)'
+    },
+    { 
+      name: 'Neutral', 
+      value: 30, 
+      color: '#64748b',
+      gradient: 'url(#neutralGradient)'
+    },
+    { 
+      name: 'Bearish', 
+      value: 100 - sentimentData.scam_indicators.social_sentiment - 30, 
+      color: '#ef4444',
+      gradient: 'url(#negativeGradient)'
+    }
   ] : [];
+
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({
+    cx, cy, midAngle, innerRadius, outerRadius, percent
+  }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -406,11 +449,11 @@ export const CryptoSentimentAnalyzer = () => {
                       volume: sentimentData.scam_indicators.volume_anomaly ? 75 : 25,
                       liquidityRisk: Math.floor(Math.random() * 60) + 20,
                       manipulationScore: sentimentData.scam_indicators.suspicious_keywords.length * 20,
-                      rugPullRisk: sentimentData.risk_level === 'CRITICAL' ? 85 : sentimentData.risk_level === 'HIGH' ? 65 : sentimentData.risk_level === 'MEDIUM' ? 35 : 15
+                      volatilityRisk: sentimentData.risk_level === 'CRITICAL' ? 85 : sentimentData.risk_level === 'HIGH' ? 65 : sentimentData.risk_level === 'MEDIUM' ? 35 : 15
                     }
                   }}
                   priceHistory={chartData.map((item, index) => ({
-                    time: `Day ${index + 1}`,
+                    time: item.time,
                     price: item.price,
                     sentiment: 30 + Math.random() * 40
                   }))}
@@ -420,7 +463,7 @@ export const CryptoSentimentAnalyzer = () => {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               {/* Crypto Info */}
-              <Card className="stat-card">
+              <Card className="stat-card module-card sentiment-module">
                 <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
                   <img 
                     src={`https://assets.coingecko.com/coins/images/1/large/bitcoin.png`} 
@@ -434,9 +477,14 @@ export const CryptoSentimentAnalyzer = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Current Price</span>
-                    <span className="text-xl font-bold green-glow" data-testid="text-current-price">
-                      ${cryptoData.current_price.toFixed(4)}
-                    </span>
+                    <div className="text-right">
+                      <div className="text-xl font-bold green-glow" data-testid="text-current-price">
+                        ${cryptoData.current_price.toFixed(6)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date().toLocaleTimeString()} UTC
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex justify-between items-center">
@@ -470,7 +518,7 @@ export const CryptoSentimentAnalyzer = () => {
               </Card>
 
               {/* Sentiment Analysis */}
-              <Card className="stat-card">
+              <Card className="stat-card module-card sentiment-module">
                 <h3 className="text-xl font-semibold mb-4 text-white">Sentiment Analysis</h3>
                 
                 <div className="space-y-4">
@@ -526,7 +574,7 @@ export const CryptoSentimentAnalyzer = () => {
             </div>
 
             {/* Price Chart */}
-            <Card className="stat-card mb-8">
+            <Card className="stat-card mb-8 module-card sentiment-module">
               <h3 className="text-xl font-semibold mb-4 text-white">7-Day Price Chart</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -547,8 +595,8 @@ export const CryptoSentimentAnalyzer = () => {
                         borderRadius: '8px',
                         color: 'hsl(var(--card-foreground))'
                       }}
-                      labelFormatter={(value) => `Day ${value}`}
-                      formatter={(value: any) => [`$${value.toFixed(4)}`, 'Price']}
+                      labelFormatter={(value) => value}
+                      formatter={(value: any) => [`$${value.toFixed(6)}`, 'Price']}
                     />
                     <Line 
                       type="monotone" 
@@ -564,7 +612,7 @@ export const CryptoSentimentAnalyzer = () => {
 
             {/* News Analysis */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <Card className="stat-card">
+              <Card className="stat-card module-card sentiment-module">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-semibold text-white">Recent News</h3>
                   <div className="flex items-center space-x-2">
@@ -648,22 +696,38 @@ export const CryptoSentimentAnalyzer = () => {
               </Card>
 
               {/* Sentiment Breakdown */}
-              <Card className="stat-card">
+              <Card className="stat-card module-card sentiment-module">
                 <h3 className="text-xl font-semibold mb-4 text-white">Sentiment Breakdown</h3>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
+                      <defs>
+                        <linearGradient id="positiveGradient" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#22c55e" />
+                          <stop offset="100%" stopColor="#16a34a" />
+                        </linearGradient>
+                        <linearGradient id="negativeGradient" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="100%" stopColor="#dc2626" />
+                        </linearGradient>
+                        <linearGradient id="neutralGradient" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#64748b" />
+                          <stop offset="100%" stopColor="#475569" />
+                        </linearGradient>
+                      </defs>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
+                        labelLine={false}
+                        label={renderCustomizedLabel}
                         innerRadius={40}
                         outerRadius={80}
                         paddingAngle={5}
                         dataKey="value"
                       >
                         {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`cell-${index}`} fill={entry.gradient || entry.color} />
                         ))}
                       </Pie>
                       <Tooltip 
@@ -691,12 +755,12 @@ export const CryptoSentimentAnalyzer = () => {
             </div>
 
             {/* Data Freshness */}
-            <Card className="stat-card">
+            <Card className="stat-card module-card sentiment-module">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Info className="w-5 h-5 mr-2 text-primary" />
                   <span className="text-sm text-gray-400" data-testid="text-data-freshness">
-                    Data last updated: {new Date(sentimentData.data_freshness).toLocaleString()}
+                    Data last updated: {new Date(sentimentData.data_freshness).toLocaleString()} ({Math.floor((Date.now() - new Date(sentimentData.data_freshness).getTime()) / 1000)}s ago)
                   </span>
                 </div>
                 <Badge variant="outline" className="border-primary text-primary">

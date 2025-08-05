@@ -39,7 +39,7 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
       // In a real implementation, this would call Reddit API
       const mockPosts: RedditPost[] = Array.from({ length: 20 }, (_, i) => ({
         id: `post_${i}`,
-        title: `Discussion about ${coinSymbol} - ${['Moon potential?', 'Price prediction', 'Technical analysis', 'Bullish news', 'Bearish outlook'][Math.floor(Math.random() * 5)]}`,
+        title: `Discussion about ${coinSymbol} - ${['Price target analysis', 'Technical breakout', 'Market analysis', 'Bullish momentum', 'Bearish pressure'][Math.floor(Math.random() * 5)]}`,
         content: `Sample content about ${coinSymbol}...`,
         score: Math.floor(Math.random() * 1000),
         sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)] as any,
@@ -47,7 +47,7 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
         isBot: Math.random() > 0.8,
         isSarcasm: Math.random() > 0.9,
         isMeme: Math.random() > 0.7,
-        timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+        timestamp: new Date().toISOString(),
         author: `user_${Math.floor(Math.random() * 1000)}`,
         subreddit: ['cryptocurrency', 'CryptoMarkets', 'Bitcoin', 'ethtrader'][Math.floor(Math.random() * 4)],
         comments: Math.floor(Math.random() * 100),
@@ -110,8 +110,16 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
     }
   };
 
+  const getSentimentLabel = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return 'Bullish';
+      case 'negative': return 'Bearish';
+      default: return 'Neutral';
+    }
+  };
+
   return (
-    <Card className="p-6 border-border">
+    <Card className="p-6 border-border module-card sentiment-module">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center">
           <MessageSquare className="w-5 h-5 mr-2 text-accent" />
@@ -140,17 +148,19 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
 
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {filteredPosts.map((post) => (
-          <div key={post.id} className="p-3 rounded-lg bg-secondary/50 border border-border/50">
+          <div key={post.id} className="p-3 rounded-lg bg-secondary/50 border border-border/50 module-card">
             <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2 flex-1">
-                <div className={`flex items-center ${getSentimentColor(post.sentiment)}`}>
+              <div className="flex items-center gap-3 flex-1">
+                <div className={`flex items-center gap-1 ${getSentimentColor(post.sentiment)}`}>
                   {getSentimentIcon(post.sentiment)}
+                  <span className="text-xs font-medium">{getSentimentLabel(post.sentiment)}</span>
                 </div>
                 <a 
                   href={post.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors flex-1"
+                  data-testid={`link-reddit-post-${post.id}`}
                 >
                   <h4 className="text-sm font-medium line-clamp-1 hover:underline">{post.title}</h4>
                 </a>
@@ -163,14 +173,23 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
                 )}
                 {post.isMeme && (
                   <Badge variant="outline" className="text-xs px-1 py-0">
-                    Meme
+                    Analysis
                   </Badge>
                 )}
                 {post.isSarcasm && (
                   <Badge variant="secondary" className="text-xs px-1 py-0">
-                    Sarcasm
+                    Discussion
                   </Badge>
                 )}
+                <a 
+                  href={post.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  data-testid={`button-external-${post.id}`}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             </div>
             
@@ -182,18 +201,10 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
                 <span>{post.comments} comments</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>Confidence: {Math.round(post.confidence * 100)}%</span>
-                <Button variant="ghost" size="sm" className="h-auto p-0">
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
+                <span className={getSentimentColor(post.sentiment)}>
+                  {new Date(post.timestamp).toLocaleTimeString()} 
+                </span>
               </div>
-            </div>
-            
-            <div className="mt-2">
-              <Progress 
-                value={post.confidence * 100} 
-                className="h-1"
-              />
             </div>
           </div>
         ))}
