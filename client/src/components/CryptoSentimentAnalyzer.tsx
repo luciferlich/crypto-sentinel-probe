@@ -285,10 +285,10 @@ export const CryptoSentimentAnalyzer = () => {
             <h1 className="text-5xl font-bold text-white mb-6 leading-tight">
               Analyze crypto sentiment with 
               <span className="block">
-                the potential to detect scams and
+                the potential to detect scams
               </span>
               <span className="block">
-                protect investors from fraud
+                and protect investors from fraud
               </span>
             </h1>
             <p className="text-xl text-gray-400 mb-8">
