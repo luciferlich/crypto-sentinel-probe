@@ -266,7 +266,10 @@ export const CryptoSentimentAnalyzer = () => {
             <img 
               src={sentinelLogoPath} 
               alt="Sentinel Logo" 
-              className="w-14 h-14 rounded-xl shadow-lg shadow-primary/20"
+              className="w-14 h-14 rounded-xl"
+              style={{
+                filter: 'drop-shadow(0 0 12px rgba(0, 255, 136, 0.4))'
+              }}
             />
             <span className="text-2xl font-bold text-white">CryptoSentinel</span>
           </div>
