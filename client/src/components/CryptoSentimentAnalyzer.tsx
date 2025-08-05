@@ -243,7 +243,7 @@ export const CryptoSentimentAnalyzer = () => {
     return 'text-destructive';
   };
 
-  const chartData = cryptoData?.sparkline_in_7d?.price?.map((price, index) => {
+  const chartData = cryptoData?.sparkline_in_7d?.price?.slice(-7).map((price, index) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - index));
     return {
@@ -298,9 +298,9 @@ export const CryptoSentimentAnalyzer = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="w-full relative overflow-hidden">
       {/* Sticky Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
+      <div className="absolute top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm border-b border-gray-800">
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -326,7 +326,7 @@ export const CryptoSentimentAnalyzer = () => {
       <div className="absolute inset-0 world-map-bg opacity-20"></div>
       
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-6 pt-24 pb-8">
+      <div className="relative z-10 container mx-auto px-6 pt-24 pb-8 max-w-7xl">
 
         {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
@@ -703,17 +703,27 @@ export const CryptoSentimentAnalyzer = () => {
                     <PieChart>
                       <defs>
                         <linearGradient id="positiveGradient" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="#22c55e" />
+                          <stop offset="0%" stopColor="#10b981" />
+                          <stop offset="50%" stopColor="#22c55e" />
                           <stop offset="100%" stopColor="#16a34a" />
                         </linearGradient>
                         <linearGradient id="negativeGradient" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="0%" stopColor="#f87171" />
+                          <stop offset="50%" stopColor="#ef4444" />
                           <stop offset="100%" stopColor="#dc2626" />
                         </linearGradient>
                         <linearGradient id="neutralGradient" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="#64748b" />
+                          <stop offset="0%" stopColor="#94a3b8" />
+                          <stop offset="50%" stopColor="#64748b" />
                           <stop offset="100%" stopColor="#475569" />
                         </linearGradient>
+                        <filter id="glow">
+                          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                          <feMerge> 
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                          </feMerge>
+                        </filter>
                       </defs>
                       <Pie
                         data={pieData}
@@ -721,21 +731,30 @@ export const CryptoSentimentAnalyzer = () => {
                         cy="50%"
                         labelLine={false}
                         label={renderCustomizedLabel}
-                        innerRadius={40}
-                        outerRadius={80}
-                        paddingAngle={5}
+                        innerRadius={45}
+                        outerRadius={85}
+                        paddingAngle={2}
                         dataKey="value"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth={1}
                       >
                         {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.gradient || entry.color} />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.gradient || entry.color}
+                            filter="url(#glow)"
+                          />
                         ))}
                       </Pie>
                       <Tooltip 
                         contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                          border: '1px solid rgba(34, 197, 94, 0.3)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
                         }}
+                        formatter={(value: any) => [`${value.toFixed(1)}%`, 'Sentiment']}
                       />
                     </PieChart>
                   </ResponsiveContainer>

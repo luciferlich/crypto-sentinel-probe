@@ -117,6 +117,9 @@ All colors MUST be HSL.
       radial-gradient(circle at 80% 80%, hsl(120 100% 50% / 0.05) 0%, transparent 50%),
       linear-gradient(180deg, hsl(0 0% 8%) 0%, hsl(0 0% 5%) 100%);
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -206,5 +209,19 @@ All colors MUST be HSL.
 
   .neutral-gradient {
     background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  }
+
+  /* Center page content */
+  .page-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .content-wrapper {
+    width: 100%;
+    max-width: 1400px;
   }
 }

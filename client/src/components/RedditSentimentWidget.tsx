@@ -51,7 +51,7 @@ export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditS
         author: `user_${Math.floor(Math.random() * 1000)}`,
         subreddit: ['cryptocurrency', 'CryptoMarkets', 'Bitcoin', 'ethtrader'][Math.floor(Math.random() * 4)],
         comments: Math.floor(Math.random() * 100),
-        url: `https://reddit.com/r/${['cryptocurrency', 'CryptoMarkets', 'Bitcoin', 'ethtrader'][Math.floor(Math.random() * 4)]}/comments/abc${i}`
+        url: `https://www.reddit.com/r/${['cryptocurrency', 'CryptoMarkets', 'Bitcoin', 'ethtrader'][Math.floor(Math.random() * 4)]}/comments/abc${i}/`
       }));
 
       setPosts(mockPosts);
