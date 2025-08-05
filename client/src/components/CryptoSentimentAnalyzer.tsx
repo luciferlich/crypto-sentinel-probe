@@ -256,31 +256,34 @@ export const CryptoSentimentAnalyzer = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Sticky Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <img 
+                src={sentinelLogoPath} 
+                alt="Sentinel Logo" 
+                className="w-10 h-10 rounded-lg"
+              />
+              <span className="text-xl font-bold text-white">CryptoSentinel</span>
+            </div>
+            <Button 
+              variant="outline" 
+              className="border-primary text-primary hover:bg-primary hover:text-black"
+              data-testid="button-donate"
+            >
+              Donate CRYPTO
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Background World Map */}
       <div className="absolute inset-0 world-map-bg opacity-20"></div>
       
-      {/* Header */}
-      <div className="relative z-10 container mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center space-x-4">
-            <img 
-              src={sentinelLogoPath} 
-              alt="Sentinel Logo" 
-              className="w-14 h-14 rounded-xl"
-              style={{
-                filter: 'drop-shadow(0 0 12px rgba(0, 255, 136, 0.4))'
-              }}
-            />
-            <span className="text-2xl font-bold text-white">CryptoSentinel</span>
-          </div>
-          <Button 
-            variant="outline" 
-            className="border-primary text-primary hover:bg-primary hover:text-black"
-            data-testid="button-donate"
-          >
-            Donate CRYPTO
-          </Button>
-        </div>
+      {/* Main Content */}
+      <div className="relative z-10 container mx-auto px-6 pt-24 pb-8">
 
         {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
