@@ -78,12 +78,12 @@ export const SentimentDashboard = ({
     sentiment: 50 + Math.random() * 40
   }))
 }: Partial<SentimentDashboardProps> = {}) => {
-  const overallRisk = (
+  const overallRisk = metrics?.riskFactors ? (
     metrics.riskFactors.volume + 
     metrics.riskFactors.liquidityRisk + 
     metrics.riskFactors.manipulationScore + 
     metrics.riskFactors.volatilityRisk
-  ) / 4;
+  ) / 4 : 25;
 
   const getRiskLevel = (score: number) => {
     if (score < 25) return { label: 'LOW', color: 'bg-success', textColor: 'text-success' };
@@ -95,12 +95,12 @@ export const SentimentDashboard = ({
   const riskLevel = getRiskLevel(overallRisk);
 
   const radarData = [
-    { subject: 'Reddit Sentiment', value: metrics.redditSentiment.score, fullMark: 100 },
-    { subject: 'News Analysis', value: metrics.newsAnalysis.sentiment, fullMark: 100 },
-    { subject: 'Social Engagement', value: metrics.socialEngagement.viralityScore, fullMark: 100 },
-    { subject: 'Liquidity', value: 100 - metrics.riskFactors.liquidityRisk, fullMark: 100 },
-    { subject: 'Credibility', value: metrics.newsAnalysis.credibility, fullMark: 100 },
-    { subject: 'Volume Health', value: 100 - metrics.riskFactors.volume, fullMark: 100 }
+    { subject: 'Reddit Sentiment', value: metrics?.redditSentiment?.score || 0, fullMark: 100 },
+    { subject: 'News Analysis', value: metrics?.newsAnalysis?.sentiment || 0, fullMark: 100 },
+    { subject: 'Social Engagement', value: metrics?.socialEngagement?.viralityScore || 0, fullMark: 100 },
+    { subject: 'Liquidity', value: 100 - (metrics?.riskFactors?.liquidityRisk || 0), fullMark: 100 },
+    { subject: 'Credibility', value: metrics?.newsAnalysis?.credibility || 0, fullMark: 100 },
+    { subject: 'Volume Health', value: 100 - (metrics?.riskFactors?.volume || 0), fullMark: 100 }
   ];
 
   const engagementData = priceHistory.map((item, index) => ({
@@ -137,32 +137,32 @@ export const SentimentDashboard = ({
               <div className="flex justify-between items-center">
                 <span className="text-sm">Volume Risk</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={metrics.riskFactors.volume} className="w-16 h-2" />
-                  <span className="text-xs w-8">{metrics.riskFactors.volume}%</span>
+                  <Progress value={metrics?.riskFactors?.volume || 0} className="w-16 h-2" />
+                  <span className="text-xs w-8">{metrics?.riskFactors?.volume || 0}%</span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">Liquidity Risk</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={metrics.riskFactors.liquidityRisk} className="w-16 h-2" />
-                  <span className="text-xs w-8">{metrics.riskFactors.liquidityRisk}%</span>
+                  <Progress value={metrics?.riskFactors?.liquidityRisk || 0} className="w-16 h-2" />
+                  <span className="text-xs w-8">{metrics?.riskFactors?.liquidityRisk || 0}%</span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">Manipulation Score</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={metrics.riskFactors.manipulationScore} className="w-16 h-2" />
-                  <span className="text-xs w-8">{metrics.riskFactors.manipulationScore}%</span>
+                  <Progress value={metrics?.riskFactors?.manipulationScore || 0} className="w-16 h-2" />
+                  <span className="text-xs w-8">{metrics?.riskFactors?.manipulationScore || 0}%</span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">Volatility Risk</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={metrics.riskFactors.volatilityRisk} className="w-16 h-2" />
-                  <span className="text-xs w-8">{metrics.riskFactors.volatilityRisk}%</span>
+                  <Progress value={metrics?.riskFactors?.volatilityRisk || 0} className="w-16 h-2" />
+                  <span className="text-xs w-8">{metrics?.riskFactors?.volatilityRisk || 0}%</span>
                 </div>
               </div>
             </div>
@@ -180,13 +180,13 @@ export const SentimentDashboard = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
-                  {metrics.redditSentiment.score.toFixed(0)}
+                  {(metrics?.redditSentiment?.score || 0).toFixed(0)}
                 </div>
                 <p className="text-xs text-muted-foreground">Sentiment Score</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">
-                  {metrics.redditSentiment.totalPosts}
+                  {metrics?.redditSentiment?.totalPosts || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Posts Analyzed</p>
               </div>
@@ -198,7 +198,7 @@ export const SentimentDashboard = ({
                   <TrendingUp className="w-3 h-3 mr-1 text-success" />
                   Positive
                 </span>
-                <span className="text-sm font-medium">{metrics.redditSentiment.positiveRatio}%</span>
+                <span className="text-sm font-medium">{metrics?.redditSentiment?.positiveRatio || 0}%</span>
               </div>
               
               <div className="flex justify-between items-center">
@@ -206,7 +206,7 @@ export const SentimentDashboard = ({
                   <TrendingDown className="w-3 h-3 mr-1 text-destructive" />
                   Negative
                 </span>
-                <span className="text-sm font-medium">{metrics.redditSentiment.negativeRatio}%</span>
+                <span className="text-sm font-medium">{metrics?.redditSentiment?.negativeRatio || 0}%</span>
               </div>
               
               <div className="flex justify-between items-center">
@@ -222,12 +222,12 @@ export const SentimentDashboard = ({
                     <p>Detected automated posts and comments</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-sm font-medium">{metrics.redditSentiment.botDetected}%</span>
+                <span className="text-sm font-medium">{metrics?.redditSentiment?.botDetected || 0}%</span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">Meme Content</span>
-                <span className="text-sm font-medium">{metrics.redditSentiment.memeContent}%</span>
+                <span className="text-sm font-medium">{metrics?.redditSentiment?.memeContent || 0}%</span>
               </div>
             </div>
           </div>
@@ -244,13 +244,13 @@ export const SentimentDashboard = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-accent">
-                  {(metrics.socialEngagement.mentions / 1000).toPrecision(3)}K
+                  {((metrics?.socialEngagement?.mentions || 0) / 1000).toPrecision(3)}K
                 </div>
                 <p className="text-xs text-muted-foreground">Mentions (24h)</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">
-                  {metrics.socialEngagement.viralityScore.toPrecision(3)}
+                  {(metrics?.socialEngagement?.viralityScore || 0).toPrecision(3)}
                 </div>
                 <p className="text-xs text-muted-foreground">Virality Score</p>
               </div>
@@ -259,12 +259,12 @@ export const SentimentDashboard = ({
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm">News Sentiment</span>
-                <span className="text-sm font-medium">{Number(metrics.newsAnalysis.sentiment).toPrecision(3)}/100</span>
+                <span className="text-sm font-medium">{Number(metrics?.newsAnalysis?.sentiment || 0).toPrecision(3)}/100</span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">News Credibility</span>
-                <span className="text-sm font-medium">{Number(metrics.newsAnalysis.credibility).toPrecision(3)}%</span>
+                <span className="text-sm font-medium">{Number(metrics?.newsAnalysis?.credibility || 0).toPrecision(3)}%</span>
               </div>
               
               <div className="flex justify-between items-center">
@@ -280,12 +280,12 @@ export const SentimentDashboard = ({
                     <p>How recent the analyzed data is</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-sm font-medium">{Number(metrics.newsAnalysis.recency).toPrecision(3)}%</span>
+                <span className="text-sm font-medium">{Number(metrics?.newsAnalysis?.recency || 0).toPrecision(3)}%</span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm">Influencer Sentiment</span>
-                <span className="text-sm font-medium">{Number(metrics.socialEngagement.influencerSentiment).toPrecision(3)}/100</span>
+                <span className="text-sm font-medium">{Number(metrics?.socialEngagement?.influencerSentiment || 0).toPrecision(3)}/100</span>
               </div>
             </div>
           </div>
