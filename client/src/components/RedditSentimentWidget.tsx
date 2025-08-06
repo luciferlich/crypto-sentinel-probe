@@ -23,11 +23,14 @@ interface RedditPost {
 }
 
 interface RedditSentimentWidgetProps {
-  coinSymbol: string;
-  onSentimentUpdate: (sentiment: any) => void;
+  coinSymbol?: string;
+  onSentimentUpdate?: (sentiment: any) => void;
 }
 
-export const RedditSentimentWidget = ({ coinSymbol, onSentimentUpdate }: RedditSentimentWidgetProps) => {
+export const RedditSentimentWidget = ({ 
+  coinSymbol = "BTC", 
+  onSentimentUpdate = () => {} 
+}: RedditSentimentWidgetProps = {}) => {
   const [posts, setPosts] = useState<RedditPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'human' | 'high-confidence'>('all');

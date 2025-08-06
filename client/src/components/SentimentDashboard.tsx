@@ -41,7 +41,43 @@ interface SentimentDashboardProps {
   priceHistory: Array<{ time: string; price: number; sentiment: number }>;
 }
 
-export const SentimentDashboard = ({ coinSymbol, metrics, priceHistory }: SentimentDashboardProps) => {
+export const SentimentDashboard = ({ 
+  coinSymbol = "BTC", 
+  metrics = {
+    redditSentiment: {
+      score: 75,
+      totalPosts: 150,
+      positiveRatio: 0.65,
+      negativeRatio: 0.25,
+      botDetected: 12,
+      sarcasmDetected: 8,
+      memeContent: 25
+    },
+    newsAnalysis: {
+      sentiment: 68,
+      credibility: 82,
+      recency: 90,
+      volume: 45
+    },
+    socialEngagement: {
+      mentions: 1250,
+      interactions: 8500,
+      influencerSentiment: 72,
+      viralityScore: 58
+    },
+    riskFactors: {
+      volume: 25,
+      liquidityRisk: 15,
+      manipulationScore: 30,
+      volatilityRisk: 40
+    }
+  }, 
+  priceHistory = Array.from({ length: 24 }, (_, i) => ({
+    time: `${i}:00`,
+    price: 45000 + Math.random() * 5000,
+    sentiment: 50 + Math.random() * 40
+  }))
+}: Partial<SentimentDashboardProps> = {}) => {
   const overallRisk = (
     metrics.riskFactors.volume + 
     metrics.riskFactors.liquidityRisk + 

@@ -46,9 +46,12 @@ UI Design Preference: Dark theme with green accents, PLUR-style interface with h
 - **Charts and Visualization**: Recharts library for all data visualization needs
 
 ### Core Features Architecture
-1. **Sentiment Analysis Engine**: Multi-source data aggregation with confidence scoring
-2. **Risk Assessment**: Scam detection algorithms with volume anomaly detection
-3. **Real-time Updates**: WebSocket-ready architecture for live data streaming
-4. **Reddit Integration**: Bot detection, sarcasm filtering, and engagement metrics
-5. **News Analysis**: Source credibility scoring and sentiment weighting
-6. **Price Correlation**: Historical price data correlation with sentiment trends
+1. **Multi-Agent AI Orchestration**: Coordinated workflow management between specialized AI agents
+   - Data Harvester Agent: Intelligent data collection from Reddit, news sources, and social media
+   - NLP Processor Agent: Local sentiment analysis using rule-based crypto-specific algorithms
+   - Market Correlator Agent: Sentiment-market data correlation with risk assessment
+2. **Local Sentiment Analysis Engine**: Free, crypto-optimized sentiment analysis without external API dependencies
+3. **Workflow State Management**: Stateful agent coordination with real-time progress tracking
+4. **Risk Assessment**: Scam detection, volume anomaly detection, and divergence alerts
+5. **Real-time Agent Health Monitoring**: Live status tracking of all AI agents
+6. **Comprehensive Data Storage**: PostgreSQL schema for cryptocurrencies, sentiment analysis, market data, and workflows
