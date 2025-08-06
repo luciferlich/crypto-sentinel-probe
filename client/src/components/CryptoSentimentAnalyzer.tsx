@@ -9,6 +9,9 @@ import { Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Info, Clo
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { SentimentDashboard } from '@/components/SentimentDashboard';
 import { RedditSentimentWidget } from '@/components/RedditSentimentWidget';
+import { AgentOrchestrator } from '@/components/AgentOrchestrator';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import sentinelLogoPath from "@assets/Sentinel_1754389520539.png";
 
 interface CryptoData {
@@ -57,6 +60,7 @@ export const CryptoSentimentAnalyzer = () => {
   const [newsData, setNewsData] = useState<NewsItem[]>([]);
   const [newsTimeRange, setNewsTimeRange] = useState([7]); // Days ago
   const [loadingNews, setLoadingNews] = useState(false);
+  const [useAIAgents, setUseAIAgents] = useState(false);
   const { toast } = useToast();
 
   // Demo statistics that would come from real analytics
@@ -346,24 +350,39 @@ export const CryptoSentimentAnalyzer = () => {
             </p>
             
             {/* Search Section */}
-            <div className="flex gap-4 mb-8">
-              <Input
-                placeholder="Enter cryptocurrency (e.g., bitcoin, BTC)"
-                value={coin}
-                onChange={(e) => setCoin(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white flex-1"
-                onKeyPress={(e) => e.key === 'Enter' && analyzeCrypto()}
-                data-testid="input-crypto"
-              />
-              <Button 
-                onClick={analyzeCrypto}
-                disabled={loading}
-                className="bg-primary hover:bg-primary/80 text-black px-8"
-                data-testid="button-analyze"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                {loading ? 'Analyzing...' : 'Analyze Now'}
-              </Button>
+            <div className="space-y-4 mb-8">
+              <div className="flex gap-4">
+                <Input
+                  placeholder="Enter cryptocurrency (e.g., bitcoin, BTC)"
+                  value={coin}
+                  onChange={(e) => setCoin(e.target.value)}
+                  className="bg-gray-800 border-gray-700 text-white flex-1"
+                  onKeyPress={(e) => e.key === 'Enter' && analyzeCrypto()}
+                  data-testid="input-crypto"
+                />
+                <Button 
+                  onClick={analyzeCrypto}
+                  disabled={loading}
+                  className="bg-primary hover:bg-primary/80 text-black px-8"
+                  data-testid="button-analyze"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  {loading ? 'Analyzing...' : 'Analyze Now'}
+                </Button>
+              </div>
+              
+              {/* AI Agents Toggle */}
+              <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                <Switch
+                  id="ai-agents"
+                  checked={useAIAgents}
+                  onCheckedChange={setUseAIAgents}
+                  data-testid="switch-ai-agents"
+                />
+                <Label htmlFor="ai-agents" className="text-gray-300 cursor-pointer">
+                  Use Advanced AI Agent Orchestration for Enhanced Analysis
+                </Label>
+              </div>
             </div>
           </div>
 
@@ -458,6 +477,13 @@ export const CryptoSentimentAnalyzer = () => {
                     sentiment: 30 + Math.random() * 40
                   }))}
                 />
+              </div>
+            )}
+
+            {/* AI Agent Orchestrator Section */}
+            {useAIAgents && (
+              <div className="mb-8">
+                <AgentOrchestrator />
               </div>
             )}
             
