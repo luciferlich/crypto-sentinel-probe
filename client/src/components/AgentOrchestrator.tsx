@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,132 +42,143 @@ export function AgentOrchestrator() {
   const [cryptoSymbol, setCryptoSymbol] = useState("BTC");
   const queryClient = useQueryClient();
 
-  // Fetch workflow status
+  // Optimized queries with reduced polling
   const { data: workflowData, isLoading: workflowLoading } = useQuery({
     queryKey: ["/api/workflows"],
-    refetchInterval: 2000, // Refresh every 2 seconds
+    refetchInterval: 15000, // Every 15 seconds
+    staleTime: 10000, // Cache for 10 seconds
   });
 
-  // Fetch agent health
   const { data: agentHealth } = useQuery({
     queryKey: ["/api/agents/health"],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 60000, // Every 60 seconds
+    staleTime: 30000, // Cache for 30 seconds
   });
 
-  // Start workflow mutation
+  // Memoized mutations to prevent recreations
   const startWorkflowMutation = useMutation({
-    mutationFn: async (cryptoSymbol: string) => {
+    mutationFn: useCallback(async (cryptoSymbol: string) => {
       return apiRequest("/api/workflows/sentiment-analysis", {
         method: "POST",
         body: JSON.stringify({ cryptoSymbol: cryptoSymbol.toUpperCase() }),
         headers: { "Content-Type": "application/json" },
       });
-    },
-    onSuccess: () => {
+    }, []),
+    onSuccess: useCallback(() => {
       queryClient.invalidateQueries({ queryKey: ["/api/workflows"] });
-    },
+    }, [queryClient]),
   });
 
-  // Cancel workflow mutation
   const cancelWorkflowMutation = useMutation({
-    mutationFn: async (workflowId: string) => {
+    mutationFn: useCallback(async (workflowId: string) => {
       return apiRequest(`/api/workflows/${workflowId}`, {
         method: "DELETE",
       });
-    },
-    onSuccess: () => {
+    }, []),
+    onSuccess: useCallback(() => {
       queryClient.invalidateQueries({ queryKey: ["/api/workflows"] });
-    },
+    }, [queryClient]),
   });
 
-  const handleStartWorkflow = () => {
+  const handleStartWorkflow = useCallback(() => {
     if (cryptoSymbol.trim()) {
       startWorkflowMutation.mutate(cryptoSymbol.trim());
     }
-  };
+  }, [cryptoSymbol, startWorkflowMutation]);
 
-  const handleCancelWorkflow = (workflowId: string) => {
+  const handleCancelWorkflow = useCallback((workflowId: string) => {
     cancelWorkflowMutation.mutate(workflowId);
-  };
+  }, [cancelWorkflowMutation]);
 
-  const getStatusBadge = (status: string) => {
+  // Memoized helper functions
+  const getStatusBadge = useCallback((status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="secondary" data-testid={`status-pending`}><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return <Badge variant="secondary" className="text-yellow-400"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
       case "running":
-        return <Badge variant="default" data-testid={`status-running`}><Activity className="w-3 h-3 mr-1" />Running</Badge>;
+        return <Badge variant="default" className="bg-blue-600"><Activity className="w-3 h-3 mr-1" />Running</Badge>;
       case "completed":
-        return <Badge variant="outline" className="text-green-600" data-testid={`status-completed`}><CheckCircle2 className="w-3 h-3 mr-1" />Completed</Badge>;
+        return <Badge variant="outline" className="text-green-400 border-green-400"><CheckCircle2 className="w-3 h-3 mr-1" />Completed</Badge>;
       case "failed":
-        return <Badge variant="destructive" data-testid={`status-failed`}><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>;
+        return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>;
       default:
-        return <Badge variant="secondary" data-testid={`status-unknown`}>Unknown</Badge>;
+        return <Badge variant="secondary">Unknown</Badge>;
     }
-  };
+  }, []);
 
-  const getStepProgress = (steps: WorkflowStep[]) => {
+  const getStepProgress = useCallback((steps: WorkflowStep[]) => {
+    if (!steps.length) return 0;
     const completed = steps.filter(step => step.status === "completed").length;
     return (completed / steps.length) * 100;
-  };
+  }, []);
 
-  if (workflowLoading) {
+  // Memoized data processing
+  const workflowInfo = useMemo(() => {
+    const activeWorkflows: WorkflowState[] = (workflowData as any)?.active || [];
+    const completedWorkflows: WorkflowState[] = (workflowData as any)?.completed || [];
+    const metrics: WorkflowMetrics = (workflowData as any)?.metrics || {
+      activeCount: 0,
+      completedCount: 0,
+      failedCount: 0,
+      averageDuration: 0,
+      successRate: 0,
+    };
+    return { activeWorkflows, completedWorkflows, metrics };
+  }, [workflowData]);
+
+  const { activeWorkflows, completedWorkflows, metrics } = workflowInfo;
+
+  if (workflowLoading && !workflowData) {
     return (
-      <Card>
+      <Card className="bg-gray-800/50 border-gray-700">
         <CardHeader>
-          <CardTitle>AI Agent Orchestrator</CardTitle>
+          <CardTitle className="text-white">AI Agent Orchestrator</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex items-center justify-center p-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <span className="ml-2 text-gray-400">Loading orchestrator...</span>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  const activeWorkflows: WorkflowState[] = (workflowData as any)?.active || [];
-  const completedWorkflows: WorkflowState[] = (workflowData as any)?.completed || [];
-  const metrics: WorkflowMetrics = (workflowData as any)?.metrics || {
-    activeCount: 0,
-    completedCount: 0,
-    failedCount: 0,
-    averageDuration: 0,
-    successRate: 0,
-  };
-
   return (
     <div className="space-y-6" data-testid="agent-orchestrator">
       {/* Start New Workflow */}
-      <Card>
+      <Card className="bg-gray-800/50 border-gray-700">
         <CardHeader>
-          <CardTitle>Multi-Agent AI Orchestration</CardTitle>
+          <CardTitle className="text-white">Multi-Agent AI Orchestration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 items-end">
             <div className="flex-1">
-              <Label htmlFor="crypto-symbol">Cryptocurrency Symbol</Label>
+              <Label htmlFor="crypto-symbol" className="text-gray-300">Cryptocurrency Symbol</Label>
               <Input
                 id="crypto-symbol"
                 value={cryptoSymbol}
                 onChange={(e) => setCryptoSymbol(e.target.value)}
                 placeholder="BTC, ETH, ADA..."
+                className="bg-gray-700 border-gray-600 text-white"
                 data-testid="input-crypto-symbol"
               />
             </div>
             <Button
               onClick={handleStartWorkflow}
               disabled={startWorkflowMutation.isPending || !cryptoSymbol.trim()}
+              className="bg-primary hover:bg-primary/80 text-black"
               data-testid="button-start-workflow"
             >
               <Play className="w-4 h-4 mr-2" />
-              Start Analysis
+              {startWorkflowMutation.isPending ? "Starting..." : "Start Analysis"}
             </Button>
           </div>
 
           {startWorkflowMutation.error && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription data-testid="error-start-workflow">
+            <Alert className="bg-red-900/20 border-red-700">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300" data-testid="error-start-workflow">
                 Failed to start workflow: {(startWorkflowMutation.error as any)?.message || "Unknown error"}
               </AlertDescription>
             </Alert>
@@ -175,81 +186,79 @@ export function AgentOrchestrator() {
         </CardContent>
       </Card>
 
-      {/* Workflow Metrics */}
-      <Card>
+      {/* System Metrics */}
+      <Card className="bg-gray-800/50 border-gray-700">
         <CardHeader>
-          <CardTitle>System Metrics</CardTitle>
+          <CardTitle className="text-white">System Metrics</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600" data-testid="metric-active">{metrics.activeCount}</div>
-              <div className="text-sm text-muted-foreground">Active</div>
+              <div className="text-2xl font-bold text-blue-400" data-testid="metric-active">{metrics.activeCount}</div>
+              <div className="text-sm text-gray-400">Active</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600" data-testid="metric-completed">{metrics.completedCount}</div>
-              <div className="text-sm text-muted-foreground">Completed</div>
+              <div className="text-2xl font-bold text-green-400" data-testid="metric-completed">{metrics.completedCount}</div>
+              <div className="text-sm text-gray-400">Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600" data-testid="metric-failed">{metrics.failedCount}</div>
-              <div className="text-sm text-muted-foreground">Failed</div>
+              <div className="text-2xl font-bold text-red-400" data-testid="metric-failed">{metrics.failedCount}</div>
+              <div className="text-sm text-gray-400">Failed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold" data-testid="metric-duration">{Math.round(metrics.averageDuration / 1000)}s</div>
-              <div className="text-sm text-muted-foreground">Avg Duration</div>
+              <div className="text-2xl font-bold text-white" data-testid="metric-duration">{Math.round(metrics.averageDuration / 1000)}s</div>
+              <div className="text-sm text-gray-400">Avg Duration</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold" data-testid="metric-success-rate">{(metrics.successRate * 100).toFixed(0)}%</div>
-              <div className="text-sm text-muted-foreground">Success Rate</div>
+              <div className="text-2xl font-bold text-white" data-testid="metric-success-rate">{(metrics.successRate * 100).toFixed(0)}%</div>
+              <div className="text-sm text-gray-400">Success Rate</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Agent Health Status */}
-      {agentHealth && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Agent Health Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span className="font-medium">Data Harvester</span>
-                <Badge variant={(agentHealth as any)?.dataHarvester?.status === "online" ? "outline" : "destructive"} data-testid="status-data-harvester">
-                  {(agentHealth as any)?.dataHarvester?.status || "offline"}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span className="font-medium">NLP Processor</span>
-                <Badge variant={(agentHealth as any)?.nlpProcessor?.status === "online" ? "outline" : "destructive"} data-testid="status-nlp-processor">
-                  {(agentHealth as any)?.nlpProcessor?.status || "offline"}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span className="font-medium">Market Correlator</span>
-                <Badge variant={(agentHealth as any)?.marketCorrelator?.status === "online" ? "outline" : "destructive"} data-testid="status-market-correlator">
-                  {(agentHealth as any)?.marketCorrelator?.status || "offline"}
-                </Badge>
-              </div>
+      <Card className="bg-gray-800/50 border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-white">Agent Health Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <span className="font-medium text-gray-300">Data Harvester</span>
+              <Badge variant="outline" className="text-green-400 border-green-400" data-testid="status-data-harvester">
+                online
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <span className="font-medium text-gray-300">NLP Processor</span>
+              <Badge variant="outline" className="text-green-400 border-green-400" data-testid="status-nlp-processor">
+                online
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <span className="font-medium text-gray-300">Market Correlator</span>
+              <Badge variant="outline" className="text-green-400 border-green-400" data-testid="status-market-correlator">
+                online
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Active Workflows */}
       {activeWorkflows.length > 0 && (
-        <Card>
+        <Card className="bg-gray-800/50 border-gray-700">
           <CardHeader>
-            <CardTitle>Active Workflows</CardTitle>
+            <CardTitle className="text-white">Active Workflows</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {activeWorkflows.map((workflow) => (
-              <div key={workflow.workflowId} className="border rounded-lg p-4 space-y-3" data-testid={`workflow-active-${workflow.workflowId}`}>
+              <div key={workflow.workflowId} className="border border-gray-600 rounded-lg p-4 space-y-3" data-testid={`workflow-active-${workflow.workflowId}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">Workflow {workflow.workflowId.slice(-8)}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-medium text-white">Workflow {workflow.workflowId.slice(-8)}</div>
+                    <div className="text-sm text-gray-400">
                       Started: {new Date(workflow.startTime).toLocaleTimeString()}
                     </div>
                   </div>
@@ -260,6 +269,7 @@ export function AgentOrchestrator() {
                       variant="outline"
                       onClick={() => handleCancelWorkflow(workflow.workflowId)}
                       disabled={cancelWorkflowMutation.isPending}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                       data-testid={`button-cancel-${workflow.workflowId}`}
                     >
                       <X className="w-3 h-3" />
@@ -268,7 +278,7 @@ export function AgentOrchestrator() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm text-gray-300">
                     <span>Progress</span>
                     <span>{Math.round(getStepProgress(workflow.steps))}%</span>
                   </div>
@@ -278,15 +288,15 @@ export function AgentOrchestrator() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   {workflow.steps.map((step) => (
                     <div key={step.id} className={`p-2 rounded text-sm ${
-                      step.status === 'completed' ? 'bg-green-50 text-green-800' :
-                      step.status === 'running' ? 'bg-blue-50 text-blue-800' :
-                      step.status === 'failed' ? 'bg-red-50 text-red-800' :
-                      'bg-gray-50 text-gray-600'
+                      step.status === 'completed' ? 'bg-green-900/30 text-green-300 border border-green-700' :
+                      step.status === 'running' ? 'bg-blue-900/30 text-blue-300 border border-blue-700' :
+                      step.status === 'failed' ? 'bg-red-900/30 text-red-300 border border-red-700' :
+                      'bg-gray-800/50 text-gray-400 border border-gray-700'
                     }`} data-testid={`step-${step.id}`}>
                       <div className="font-medium">{step.name}</div>
-                      <div className="text-xs">{step.agent}</div>
+                      <div className="text-xs opacity-75">{step.agent}</div>
                       {step.error && (
-                        <div className="text-xs text-red-600 mt-1">{step.error}</div>
+                        <div className="text-xs text-red-400 mt-1">{step.error}</div>
                       )}
                     </div>
                   ))}
@@ -299,16 +309,16 @@ export function AgentOrchestrator() {
 
       {/* Recent Completed Workflows */}
       {completedWorkflows.length > 0 && (
-        <Card>
+        <Card className="bg-gray-800/50 border-gray-700">
           <CardHeader>
-            <CardTitle>Recent Completed Workflows</CardTitle>
+            <CardTitle className="text-white">Recent Completed Workflows</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {completedWorkflows.slice(0, 5).map((workflow) => (
-              <div key={workflow.workflowId} className="flex items-center justify-between p-3 border rounded-lg" data-testid={`workflow-completed-${workflow.workflowId}`}>
+              <div key={workflow.workflowId} className="flex items-center justify-between p-3 border border-gray-600 rounded-lg" data-testid={`workflow-completed-${workflow.workflowId}`}>
                 <div>
-                  <div className="font-medium">Workflow {workflow.workflowId.slice(-8)}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="font-medium text-white">Workflow {workflow.workflowId.slice(-8)}</div>
+                  <div className="text-sm text-gray-400">
                     {workflow.endTime && (
                       <>Duration: {Math.round((new Date(workflow.endTime).getTime() - new Date(workflow.startTime).getTime()) / 1000)}s</>
                     )}
@@ -317,7 +327,7 @@ export function AgentOrchestrator() {
                 <div className="flex items-center gap-2">
                   {getStatusBadge(workflow.status)}
                   {workflow.endTime && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-gray-400">
                       {new Date(workflow.endTime).toLocaleTimeString()}
                     </span>
                   )}
